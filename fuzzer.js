@@ -4,6 +4,7 @@ var fs = require("fs"),
     linebyline = require('line-by-line'),
     path = slash(__dirname);
 
+
 const execSync = require('child_process').execSync;
 var itrust = slash("/iTrust2/src/main/java/edu/ncsu/csc/itrust2");
 
@@ -15,19 +16,34 @@ function fuzzRandomFiles() {
     if (listOfFiles.length == 0) {
         return;
     }
-
-    var i = 0
-    while (i < listOfFiles.length) {
-        // var chance = Math.random() >= 0.95;
-        // if (chance) {
-        console.log(listOfFiles[i]);
-        editFile(listOfFiles[i]);
-        // }
-        i++;
+    var iteration = 0
+    while (iteration < 3) {
+        var i = 0
+        while (i < listOfFiles.length) {
+            var chance = Math.random() >= 0.60;
+            if (chance) {
+                console.log(listOfFiles[i]);
+                if (listOfFiles[i].toLowerCase().includes("util") || listOfFiles[i].toLowerCase().includes("models")) {
+                    i++;
+                    continue;
+                }
+                editFile(listOfFiles[i]);
+            }
+            i++;
+        }
+        execSync(`git add . && git commit -m 'Commit fuzzing'`)
+        var status = execSync(`cd iTrust2 && sudo mvn compile && echo 'helloworld' && echo $?`)
+        status = status.toString().slice(-4);
+        console.log(status)
+        if (status.include('0')) {
+            execSync(`java -jar /tmp/jenkins-cli.jar -s http://localhost:8080/ build 'iTrustTestCoverage' -s`)
+            console.log('waiting...');
+        }
+        execSync('git reset --hard HEAD^')
+        console.log('done')
     }
-    execSync(`git add . && git commit -m 'Commit fuzzing' && git push origin fuzzer`)
-        // execSync('git reset --hard HEAD^')
 }
+
 
 function editFile(file) {
     var content = "";
@@ -43,7 +59,7 @@ function editFile(file) {
 
     lineReader.on('line', function(line) {
         var temp = line;
-        var chance = Math.random() >= 0.6;
+        var chance = Math.random() >= 0.80;
         if (chance) {
             if (temp.includes("username") || temp.includes("password")) {
                 // continue;
