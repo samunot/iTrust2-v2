@@ -35,7 +35,7 @@ function fuzzRandomFiles() {
         var status = execSync(`cd iTrust2 && sudo mvn compile && echo 'helloworld' && echo $?`)
         status = status.toString().slice(-4);
         console.log(status)
-        if (status.include('0')) {
+        if (status.includes('0')) {
             execSync(`java -jar /tmp/jenkins-cli.jar -s http://localhost:8080/ build 'iTrustTestCoverage' -s`)
             console.log('waiting...');
         }
